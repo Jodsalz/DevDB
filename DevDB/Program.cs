@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NetOffice.OutlookApi.Enums;
+
+using NetOffice;
+using Outlook = NetOffice.OutlookApi;
 
 namespace DevDB
 {
