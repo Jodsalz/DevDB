@@ -13,10 +13,11 @@ namespace DevDB
     class Program
     {
 
+        static Outlook.MAPIFolder inboxFolder;
+        static Outlook.MAPIFolder einbuchung;
 
         static void Main(string[] args)
         {
-            string body = "leer";
 
             // start outlook
             NetOffice.OutlookApi.Application outlookApplication = new Outlook.Application();
@@ -25,34 +26,60 @@ namespace DevDB
 
             // get inbox
             Outlook._NameSpace outlookNS = outlookApplication.Session;
-            Outlook.MAPIFolder inboxFolder = outlookNS.Folders["devdb.mailhandler@gmail.com"].Folders["Inbox"];
-            /*
-            Outlook.MAPIFolder einbuchung = outlookNS.Folders["devdb.mailhandler@gmail.com"].Folders["[Gmail]"].Folders["DevDB"].Folders["Einbuchung"];
-            Outlook.MAPIFolder ausbuchung = outlookNS.Folders["devdb.mailhandler@gmail.com"].Folders["[Gmail]"].Folders["DevDB"].Folders["Ausbuchung"];
-            */
-            Outlook.MAPIFolder einbuchung = outlookNS.Folders["devdb.mailhandler@gmail.com"].Folders["[Gmail]"].Folders["DevDB"].Folders["Einbuchung"];
+            inboxFolder = outlookNS.Folders["devdb.mailhandler@gmail.com"].Folders["Posteingang"];
+
+            einbuchung = outlookNS.Folders["devdb.mailhandler@gmail.com"].Folders["[Gmail]"].Folders["DevDB"].Folders["Einbuchung"];
             Outlook.MAPIFolder ausbuchung = outlookNS.Folders["devdb.mailhandler@gmail.com"].Folders["[Gmail]"].Folders["DevDB"].Folders["Ausbuchung"];
 
             outlookApplication.NewMailExEvent += new Outlook.Application_NewMailExEventHandler(outlook_newmail);
+
+            while (true) ;
             
         }
 
         private static void outlook_newmail(string s)
         {
-            foreach (COMObject item in inboxFolder.Items)
+            string subject = "leer";
+            Outlook.MailItem mailItem = null;
+
+            Console.WriteLine("Entered Event with inboxitems: "+ inboxFolder.Items.Count);
+
+            for (int i = (inboxFolder.Items.Count); i > 0; i--)
             {
-                Outlook.MailItem mailItem = item as Outlook.MailItem;
-                if (mailItem != null && mailItem.Subject == "DevDB Einbuchung")
+                mailItem = inboxFolder.Items[i] as Outlook.MailItem;
+               
+                
+                if (mailItem.Subject.StartsWith("DevDB 1", System.StringComparison.CurrentCultureIgnoreCase))
                 {
-                    mailItem.Move(einbuchung);
-                    body = mailItem.Body;
+                    subject = mailItem.Subject;
+                    einbuchung_vorgang(subject);
+                    mailItem.Delete();
                 }
-                else if (mailItem != null && mailItem.Subject == "DevDB Ausbuchung")
+                else if (mailItem.Subject.StartsWith("DevDB 2", System.StringComparison.CurrentCultureIgnoreCase))
                 {
-                    mailItem.Move(ausbuchung);
-                    body = mailItem.Body;
+                    subject = mailItem.Subject;
+                    ausbuchung_vorgang(subject);
+                    mailItem.Delete();
+                }
+                else
+                {
+                    mailItem.Delete();
+                    Console.WriteLine("Subject didn't match with rules!");
                 }
             }
+            Console.WriteLine("Left Event");
         }
+
+        private static void einbuchung_vorgang(string s)
+        {
+            Console.WriteLine("Einbuchung: " + s + " erfolgreich erledigt");
+        }
+
+        private static void ausbuchung_vorgang(string s)
+        {
+            Console.WriteLine("Einbuchung: " + s + " erfolgreich erledigt");
+        }
+       
+       
     }
 }

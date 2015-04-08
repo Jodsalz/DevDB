@@ -33,11 +33,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NetOffice">
-      <HintPath>..\..\..\..\Bachelorarbeit\NetOffice 1.7.3\Toolbox Binaries\NetOffice.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Bachelorarbeit\NetOffice 1.7.3\Toolbox Binaries\NetOffice.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="OutlookApi">
-      <HintPath>..\..\..\..\Bachelorarbeit\NetOffice 1.7.3\Toolbox Binaries\OutlookApi.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Bachelorarbeit\NetOffice 1.7.3\Toolbox Binaries\OutlookApi.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
