@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
 using NetOffice.OutlookApi.Enums;
 
 using NetOffice;
@@ -17,13 +18,14 @@ namespace DevDB
         static Outlook.MAPIFolder einbuchung;
         static Outlook._NameSpace outlookNS;
         static NetOffice.OutlookApi.Application outlookApplication;
-        static int flag = 0;
+        static MySqlConnection devdb;
 
         static void Main(string[] args)
         {
 
             // start outlook
             outlookApplication = new Outlook.Application();
+            devdb = new MySqlConnection(@"Server=127.0.0.1;Uid=root;Pwd=;Database=devdb;");
             
             // get inbox
             outlookNS = outlookApplication.Session;
@@ -33,7 +35,7 @@ namespace DevDB
             Outlook.MAPIFolder ausbuchung = outlookNS.Folders["devdb.mailhandler@gmail.com"].Folders["[Gmail]"].Folders["DevDB"].Folders["Ausbuchung"];
 
 
-            outlookApplication.NewMailExEvent += new Outlook.Application_NewMailExEventHandler(outlook_newmail);
+            outlookApplication.NewMailExEvent += new Outlook.Application_NewMailExEventHandler(outlook_newmail);                // Initializing both Event Handlers
             outlookApplication.Session.SyncObjects[1].SyncEndEvent += new Outlook.SyncObject_SyncEndEventHandler(sync_end);
 
             while (true)
@@ -44,15 +46,14 @@ namespace DevDB
             
         }
 
-        private static void outlook_newmail(string s)
+        private static void outlook_newmail(string s)           // Function starts through event (NewMailExEvent)
         {
             Console.WriteLine("enter newmail event");
             Console.WriteLine("starting sendandreceiv");
             outlookNS.SendAndReceive(false);
-
         }
 
-        private static void sync_end()
+        private static void sync_end()                          // Function starts through event (SyncEndEvent)
         {
             Console.WriteLine("enter syncend event");
 
@@ -66,26 +67,36 @@ namespace DevDB
             {
                 mailItem = inboxFolder.Items[i] as Outlook.MailItem;
 
+
+                // Downloads Body if not downloaded yet (IMAP Problems)
                 if (mailItem.DownloadState != OlDownloadState.olFullItem)
                 {
                     Console.WriteLine("again");
                     mailItem.MarkForDownload = OlRemoteStatus.olMarkedForDownload;
                     outlookNS.SendAndReceive(false);
-                    break;
+                    break;                                                                      // Replace with threads maybe?
                 }
 
+                // Calls Database for Insert
                 if (mailItem != null && mailItem.Subject.StartsWith("DevDB 1", System.StringComparison.CurrentCultureIgnoreCase) && mailItem.DownloadState == OlDownloadState.olFullItem)
                 {
                     subject = mailItem.Subject;
                     body = mailItem.Body;
-                    einbuchung_vorgang(subject, body);
+                    einbuchung_vorgang(body);
                     mailItem.Delete();
                 }
+
+                // Calls Database for Delete
                 else if (mailItem != null && mailItem.Subject.StartsWith("DevDB 2", System.StringComparison.CurrentCultureIgnoreCase) && mailItem.DownloadState == OlDownloadState.olFullItem)
                 {
                     subject = mailItem.Subject;
                     body = mailItem.Body;
-                    ausbuchung_vorgang(subject, body);
+                    ausbuchung_vorgang(body);
+                    mailItem.Delete();
+                }
+                else
+                {
+                    Console.WriteLine("doesn't match rules... deleted...");
                     mailItem.Delete();
                 }
 
@@ -94,14 +105,31 @@ namespace DevDB
         }
 
 
-        private static void einbuchung_vorgang(string s, string se)
+        private static void einbuchung_vorgang(string s)
         {
-            Console.WriteLine("Einbuchung: " + s + ": " + se + " erfolgreich erledigt");
+            Console.WriteLine("Einbuchung: ...");
+
+            string stm = "SELECT kennwort FROM mitarbeiter WHERE name = '" + s.Replace("\r\n", "") +"'";
+            try
+            {
+                devdb.Open();
+            }
+            catch(MySqlException ex)
+            {
+                Console.WriteLine("error opening connection {0}", ex.ToString());
+            }
+            MySqlCommand cmd = new MySqlCommand(stm, devdb);
+            string version = Convert.ToString(cmd.ExecuteScalar());
+            Console.WriteLine(version);
+            if(devdb != null)
+            {
+                devdb.Close();
+            }
         }
 
-        private static void ausbuchung_vorgang(string s, string se)
+        private static void ausbuchung_vorgang(string s)
         {
-            Console.WriteLine("Einbuchung: " + s + ": " + se + " erfolgreich erledigt");
+            Console.WriteLine("Einbuchung: " + s + ": " + s + " erfolgreich erledigt");
         }
        
        
