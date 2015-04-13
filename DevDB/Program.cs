@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using NetOffice.OutlookApi.Enums;
+using System.Text.RegularExpressions;
 
 using NetOffice;
 using Outlook = NetOffice.OutlookApi;
@@ -78,7 +79,7 @@ namespace DevDB
                 }
 
                 // Calls Database for Insert
-                if (mailItem != null && mailItem.Subject.StartsWith("DevDB 1", System.StringComparison.CurrentCultureIgnoreCase) && mailItem.DownloadState == OlDownloadState.olFullItem)
+                if (mailItem != null && mailItem.Subject.StartsWith("DevDB Einbuchung", System.StringComparison.CurrentCultureIgnoreCase) && mailItem.DownloadState == OlDownloadState.olFullItem)
                 {
                     subject = mailItem.Subject;
                     body = mailItem.Body;
@@ -104,27 +105,41 @@ namespace DevDB
             Console.WriteLine("Left Event");
         }
 
-
-        private static void einbuchung_vorgang(string s)
+        private static void passwort(string s)
         {
             Console.WriteLine("Einbuchung: ...");
 
-            string stm = "SELECT kennwort FROM mitarbeiter WHERE name = '" + s.Replace("\r\n", "") +"'";
+            string stm = "SELECT kennwort FROM mitarbeiter WHERE name = '" + s.Replace("\r\n", "") + "'";
             try
             {
                 devdb.Open();
             }
-            catch(MySqlException ex)
+            catch (MySqlException ex)
             {
                 Console.WriteLine("error opening connection {0}", ex.ToString());
             }
             MySqlCommand cmd = new MySqlCommand(stm, devdb);
             string version = Convert.ToString(cmd.ExecuteScalar());
             Console.WriteLine(version);
-            if(devdb != null)
+            if (devdb != null)
             {
                 devdb.Close();
             }
+        }
+
+        private static void einbuchung_vorgang(string s)
+        {
+            string von_datum, bis_datum, device_id, ausgeliehen_an, ausgeliehen_an_tel, ausgeliehen_an_email, ausgeliehen_von, kommentar;
+            string[] lines = Regex.Split(s, "\r\n");
+            von_datum = lines[0].Substring(lines[0].IndexOf(":") + 2); // Lese nur rechten Teil nach : aus, IndexOf liefert position von : -> +2 wegen leerzeichen 
+            bis_datum = lines[1].Substring(lines[1].IndexOf(":") + 2);
+            device_id = lines[2].Substring(lines[2].IndexOf(":") + 2);
+            ausgeliehen_an = lines[3].Substring(lines[3].IndexOf(":") + 2);
+            ausgeliehen_an_tel = lines[4].Substring(lines[4].IndexOf(":") + 2);
+            ausgeliehen_an_email = lines[5].Substring(lines[5].IndexOf(":") + 2);
+            ausgeliehen_von = lines[6].Substring(lines[6].IndexOf(":") + 2);
+            kommentar = lines[7].Substring(lines[7].IndexOf(":") + 2);
+            Console.WriteLine(von_datum + "\n" + bis_datum + "\n" + device_id + "\n" + ausgeliehen_an + "\n" + ausgeliehen_an_tel + "\n" + ausgeliehen_an_email + "\n" + ausgeliehen_von + "\n" + kommentar);
         }
 
         private static void ausbuchung_vorgang(string s)
